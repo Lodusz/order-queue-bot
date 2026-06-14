@@ -16,10 +16,10 @@ func NewService(repo order.Repository) *Service {
 	return &Service{repo: repo}
 }
 
-// CreateOrder Создание заказа
+// CreateOrder создать заказ
 func (s *Service) CreateOrder(ctx context.Context, userID int64, description string) (*order.Order, error) {
 	if description == "" {
-		return nil, fmt.Errorf("description cant be empty")
+		return nil, fmt.Errorf("description cannot be empty")
 	}
 
 	newOrder := &order.Order{
@@ -31,35 +31,37 @@ func (s *Service) CreateOrder(ctx context.Context, userID int64, description str
 	}
 
 	if err := s.repo.Create(ctx, newOrder); err != nil {
-		return nil, fmt.Errorf("failed to create order in repository: %w", err)
+		return nil, fmt.Errorf("failed to create order: %w", err)
 	}
 
 	return newOrder, nil
 }
 
-// GetOrder Возвщарает заказ по ID
+func (s *Service) GetQueue(ctx context.Context) ([]order.Order, error) {
+	return s.repo.GetQueue(ctx)
+}
 
-func (s *Service) GetOrder(ctx context.Context, id int64) (*order.Order, error) {
+// GetById получаать заказ по id
+func (s *Service) GetByID(ctx context.Context, id int64) (*order.Order, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
-// ChangeStatus перевод заказа из одного статуса в другой
+// ChangeStatus поменять статус заказа ( БЕЗОПАСНО )
 func (s *Service) ChangeStatus(ctx context.Context, id int64, newStatus order.Status) (*order.Order, error) {
 	ord, err := s.repo.GetByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get order for status update: %w", err)
+		return nil, fmt.Errorf("failed to find order: %w", err)
 	}
 
 	if !ord.CanTransitionTo(newStatus) {
-		return nil, fmt.Errorf("%w: transition from %s to %s is forbidden",
-			order.ErrInvalidStatus, ord.Status, newStatus)
+		return nil, fmt.Errorf("invalid status transition")
 	}
 
 	ord.Status = newStatus
 	ord.UpdatedAt = time.Now()
 
 	if err := s.repo.Update(ctx, ord); err != nil {
-		return nil, fmt.Errorf("failed to update order status: %w", err)
+		return nil, fmt.Errorf("failed to update status: %w", err)
 	}
 
 	return ord, nil

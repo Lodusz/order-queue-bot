@@ -1,0 +1,12 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+app
+
+*.local
+
+.DS_Store
+Thumbs.db
