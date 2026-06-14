@@ -17,6 +17,11 @@ func NewHandler(svc *service.Service) *Handler {
 	return &Handler{svc: svc}
 }
 
+func (h *Handler) Register(bot *telebot.Bot) {
+	bot.Handle("/create", h.HandleCreate)
+	bot.Handle("/queue", h.HandleQueue)
+}
+
 func (h *Handler) HandleCreate(c telebot.Context) error {
 	description := strings.Join(c.Args(), " ")
 	ord, err := h.svc.CreateOrder(context.Background(), c.Sender().ID, description)
